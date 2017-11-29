@@ -10,7 +10,7 @@ from app1.test_data import private_data, individual_data, business_data
 
 
 def ping(request):    
-    return HttpResponse(json.dumps({"you_are": "{}/{}".format(request.META['REMOTE_HOST'],
+    return HttpResponse(json.dumps({"you_are": "{}/{}".format(request.META['REMOTE_ADDR'],
                                                              request.META['HTTP_USER_AGENT']),
                                     "stand": request.session.get('stand', 'mobile')
                                     }), content_type="application/json")
