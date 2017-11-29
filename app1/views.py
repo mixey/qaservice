@@ -78,8 +78,8 @@ def create_all(request):
     error = None
     executor = SqlExec(stand)    
     try: 
-        executor.exec_file('d:/sources/python/magonline/private_customer.sql')
-        executor.exec_file('d:/sources/python/magonline/business_customer.sql')
+        executor.exec_file('../assets/private_customer.sql')
+        executor.exec_file('../assets/business_customer.sql')
         executor.commit()
     except Exception, msg: 
         error = msg 
