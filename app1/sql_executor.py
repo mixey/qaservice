@@ -8,14 +8,17 @@ class SqlExec(object):
     def __init__(self, stand):
         response = urllib2.urlopen('http://{}.dev.magonline.ru/sql.html'.format(stand))
         sql_port = int(response.read())
-        
+
+        password_file = open("ssh.password", 'r')
+        ssh_password = password_file.read()
+        password_file.close()        
         self.server = sshtunnel.SSHTunnelForwarder(
             ("dev.magdv.com", 42244),
             ssh_host_key=None,
             ssh_username="m.tkachev",
             ssh_password=None,
             ssh_private_key="../OpenSsh",
-            ssh_private_key_password="ow4cDhjwe",
+            ssh_private_key_password=ssh_password,
             remote_bind_address=("localhost", sql_port))
         
         self.server.start()
