@@ -17,7 +17,7 @@ class SqlExec(object):
             ssh_host_key=None,
             ssh_username="m.tkachev",
             ssh_password=None,
-            ssh_private_key="../OpenSsh",
+            ssh_private_key="OpenSsh",
             ssh_private_key_password=ssh_password,
             remote_bind_address=("localhost", sql_port))
         
