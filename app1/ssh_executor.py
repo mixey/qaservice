@@ -22,7 +22,8 @@ class SshExecutor(object):
         stdin , stdout, stderr = self.ssh.exec_command(command)
         print stdout.read()
         erros_mesg = stderr.read()
-        if (erros_mesg):
+        if erros_mesg:
+            print "Error: %s" % erros_mesg
             raise Exception(erros_mesg) 
     
     def close(self):
