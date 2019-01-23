@@ -41,6 +41,24 @@ def reset_session(request, session_id):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
+def bmp_reset_session(request, token):
+    stand = "master"
+
+    executor = SshExecutor(stand, 42344)
+    error = None
+    try:
+        executor.execute(
+            "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (stand, token))
+    except Exception, msg:
+        error = msg
+    executor.close()
+
+    response_data = {"message": "OK" if error is None else "'{}'".format(error),
+                     "stand": stand,
+                     "data": {"reset_token": token}
+                     }
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+
 def create_user(request, user_type):
     sql_command = ""
     user = {}
