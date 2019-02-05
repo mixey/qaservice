@@ -28,7 +28,9 @@ def reset_session(request, session_id):
     executor = SshExecutor(stand)
     error = None
     try:
-        executor.execute("cd /opt/stand/magonline/%s \ndc exec -T sesredis redis-cli -n 2 eval \"return redis.call('del', 'sess_%s')\" 0 prefix" % (stand, session_id))
+        executor.execute(
+            "cd /opt/stand/magonline/%s \ndc exec -T sesredis redis-cli -n 2 eval \"return redis.call('del', 'sess_%s')\" 0 prefix" % (
+                stand, session_id))
         # executor.execute("cd /opt/stand/magonline/%s \ndc exec -T sesredis bash" % (stand))
     except Exception, msg:
         error = msg
@@ -41,23 +43,29 @@ def reset_session(request, session_id):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-def bmp_reset_session(request, token):
+def bmp_reset_session(request, token, refresh_token=None):
     stand = "master"
 
     executor = SshExecutor(stand, 42344)
     error = None
     try:
         executor.execute(
-            "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (stand, token))
+            "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (
+                stand, token))
+        if refresh_token:
+            executor.execute(
+                "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (
+                    stand, refresh_token))
     except Exception, msg:
         error = msg
     executor.close()
 
     response_data = {"message": "OK" if error is None else "'{}'".format(error),
                      "stand": stand,
-                     "data": {"reset_token": token}
+                     "data": {"reset_token": token, "reset_refresh_token": refresh_token}
                      }
     return HttpResponse(json.dumps(response_data), content_type="application/json")
+
 
 def create_user(request, user_type):
     sql_command = ""
