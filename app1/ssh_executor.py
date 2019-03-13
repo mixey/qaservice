@@ -21,11 +21,12 @@ class SshExecutor(object):
     def execute(self, command):  
         print "Executing {}".format(command)
         stdin , stdout, stderr = self.ssh.exec_command(command)
-        print stdout.read()
+        result = stdout.read()
         erros_mesg = stderr.read()
         if erros_mesg:
             print "Error: %s" % erros_mesg
-            raise Exception(erros_mesg) 
+            raise Exception(erros_mesg)
+        return result
     
     def close(self):
         self.ssh.close()

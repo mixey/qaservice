@@ -127,3 +127,16 @@ def reset_recovery_requests(request):
                      "stand": stand
                      }
     return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
+def bmp_db_port(request):
+    stand = request.session.get('stand', 'master')
+
+    executor = SshExecutor(stand, 42344)
+    try:
+        result = executor.execute("cd /opt/stand/marketplace/%s && dc ps | grep -Po '(\d+)->5432' | grep -Po '^\d+'" % stand)
+    except Exception, msg:
+        return HttpResponse(msg)
+    executor.close()
+
+    return HttpResponse(result)
