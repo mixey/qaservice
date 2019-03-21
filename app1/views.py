@@ -6,6 +6,7 @@ import time
 import datetime
 
 from app1.sql_executor import SqlExec
+from app1.posgresql_executor import PostgreSqlExec
 from app1.test_data import private_data, individual_data, business_data
 from app1.ssh_executor import SshExecutor
 
@@ -134,9 +135,25 @@ def bmp_db_port(request):
 
     executor = SshExecutor(stand, 42344)
     try:
-        result = executor.execute("cd /opt/stand/marketplace/%s && dc ps | grep -Po '(\d+)->5432' | grep -Po '^\d+'" % stand)
+        result = executor.execute(
+            "cd /opt/stand/marketplace/%s && dc ps | grep -Po '(\d+)->5432' | grep -Po '^\d+'" % stand)
     except Exception, msg:
         return HttpResponse(msg)
     executor.close()
 
     return HttpResponse(result)
+
+
+def reset_address_coordinates(request, address_id):
+    stand = request.session.get('stand', 'master')
+    message = None
+    executor = PostgreSqlExec(stand, 42344)
+    try:
+        message = executor.execute("update delivery_address set geo = null where id = %s;" % address_id)
+        executor.commit()
+    except Exception, msg:
+        message = msg
+    executor.close()
+    response_data = {"message": message,
+                     "stand": stand}
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
