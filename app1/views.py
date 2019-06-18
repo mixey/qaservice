@@ -45,7 +45,7 @@ def reset_session(request, session_id):
 
 
 def bmp_reset_session(request, token, refresh_token=None):
-    stand = "master"
+    stand = request.session.get('stand', 'master')
 
     executor = SshExecutor(stand, 42344)
     error = None
