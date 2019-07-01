@@ -6,7 +6,11 @@ urlpatterns = [
     url(r'^stand/([\\.\w-]+)$', views.set_stand),
     url(r'^reset_session/(\w+)$', views.reset_session),
     url(r'^reset_recovery_requests$', views.reset_recovery_requests),
-    url(r'^create_user/(\w+)$', views.create_user),
+    url(r'^create_user/(private_phone_login)$', views.create_user),
+    url(r'^create_user/(private_email_login)$', views.create_user),
+    url(r'^get_phone_code/(\d+)$', views.get_phone_code),
+    url(r'^delete_user/(\d+)$', views.delete_user),
+    url(r'^create_user/(business)$', views.create_user),
     url(r'^create_all$', views.create_all),
 
     url(r'^bmp/reset_session/([\w-]+)$', views.bmp_reset_session),

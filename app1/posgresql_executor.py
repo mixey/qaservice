@@ -46,6 +46,7 @@ class PostgreSqlExec(object):
         try:
             if command.strip() != '':
                 self.cursor.execute(command)
+                return self.cursor.fetchall()
         except IOError, msg:
             print "Command skipped: ", msg
             raise msg
@@ -57,9 +58,9 @@ class PostgreSqlExec(object):
 
     def exec_file(self, filename):
         fd = open(filename, 'r')
-        sqlFile = fd.read()
+        sql_file = fd.read()
         fd.close()
-        self.statement(sqlFile)
+        self.statement(sql_file)
 
     def commit(self):
         self.cnx.commit()

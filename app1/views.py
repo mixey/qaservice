@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from django.http import HttpResponse
 import json
-import time
-import datetime
 
-from app1.sql_executor import SqlExec
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
+import qa_jsonapi
 from app1.posgresql_executor import PostgreSqlExec
-from app1.test_data import private_data, individual_data, business_data
+from app1.sql_executor import SqlExec
 from app1.ssh_executor import SshExecutor
 
 
 def ping(request):
     return HttpResponse(json.dumps({"you_are": "{}/{}".format(request.META['REMOTE_ADDR'],
                                                               request.META['HTTP_USER_AGENT']),
-                                    "stand": request.session.get('stand', 'mobile')
+                                    "stand": request.session.get('stand', 'mobile'),
                                     }), content_type="application/json")
 
 
@@ -68,32 +68,32 @@ def bmp_reset_session(request, token, refresh_token=None):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
+@csrf_exempt
 def create_user(request, user_type):
-    sql_command = ""
-    user = {}
-    if user_type == "private":
-        sql_command, user = private_data()
-    #     elif user_type == "individual":
-    #         sql_command, user = individual_data()
-    #     elif user_type == "business":
-    #         sql_command, user = business_data()
-    else:
-        raise Exception("Type value '{}' should be (private)".format(user_type))
-
-    stand = request.session.get('stand', 'mobile')
     error = None
-    executor = SqlExec(stand)
+    stand = request.session.get('stand', 'mobile')
+    response_data = {}
     try:
-        executor.statement(sql_command)
-        executor.commit()
-    except Exception, msg:
-        error = msg
-    executor.close()
+        if user_type == "private_phone_login" or user_type == "private_email_login":
+            api = qa_jsonapi.QaJsonApi(stand)
 
-    response_data = {"message": "OK" if error is None else "'{}'".format(error),
-                     "stand": stand,
-                     "data": user}
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
+            if request.body:
+                body_unicode = request.body.decode('utf-8')
+                body = json.loads(body_unicode)
+                api.set_user(body)
+            phone_as_login = True if user_type == "private_phone_login" else False
+            response_data["data"] = api.create_private_user(phone_as_login)
+        else:
+            raise Exception("Type value '{}' should be (private)".format(user_type))
+    except Exception, ex:
+        error = ex.message
+
+    response_data["message"] = "OK" if error is None else error
+    response_data["stand"] = stand
+    response = HttpResponse(json.dumps(response_data), content_type="application/json")
+    if error:
+        response.status_code = 400
+    return response
 
 
 def create_all(request):
@@ -157,3 +157,28 @@ def reset_address_coordinates(request, address_id):
     response_data = {"message": message,
                      "stand": stand}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
+def delete_user(request):
+    return None
+
+
+def get_phone_code(request, phone):
+    stand = request.session.get('stand', 'master')
+    executor = PostgreSqlExec(stand, 42344)
+    try:
+        cursor = executor.execute("""
+            SELECT token
+            FROM verification
+            WHERE value = '+%s'
+                  AND scenario = 'confirm'
+                  AND is_verified = FALSE
+            LIMIT 1""" % phone)
+        code = cursor[0][0] if cursor else None
+    except Exception, msg:
+        code = msg
+    executor.close()
+    response_data = {"data": code,
+                     "stand": stand}
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    return None
