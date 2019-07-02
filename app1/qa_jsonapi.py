@@ -92,31 +92,18 @@ class QaJsonApi(object):
         data = {
             "data": {
                 "attributes": {
-                    "first_name": firstname,
-                    "last_name": lastname,
-                    "is_phone_verified": True,
-                    "phone": phone,
-                    "email": email,
-                    "is_email_verified": True if email else False,
-                    "is_active": True
+                    "name": "Физическое лицо",
+                    "is_active": True,
+                    "type": "physical",
+                    "status": "confirmed"
                 },
                 "relationships": {
-                    "user-roles": {
-                        "data": [
-                            {
-                                "attributes": {
-                                    "role_name": "member"
-                                }
-                            }
-                        ]
-                    },
                     "delivery-addresses": {
                         "data": [
                             {
                                 "attributes": {
                                     "is_active": True,
                                     "status": 2,
-                                    "title": "Адрес_доставки_тест",
                                     "geo": {
                                         "longitude": address_item["lon"],
                                         "latitude": address_item["lat"]
@@ -127,6 +114,36 @@ class QaJsonApi(object):
                                     "contact_lastname": lastname,
                                     "comment": "Коммент_к_адресу_доставки_тест",
                                     "is_default": True
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        response = requests.post("%s/api/contractors" % self.host, data=json.dumps(data), headers=QA_HEADERS)
+        content = jsonify(response.content.decode('utf-8'))
+        contractor_id = content["data"]["id"] if "data" in content else None
+        if not contractor_id:
+            raise Exception("Contractor ID is not created")
+        data = {
+            "data": {
+                "attributes": {
+                    "first_name": firstname,
+                    "last_name": lastname,
+                    "is_phone_verified": True,
+                    "phone": phone,
+                    "email": email,
+                    "is_email_verified": True if email else False,
+                    "is_active": True,
+                    "contractor_id": contractor_id
+                },
+                "relationships": {
+                    "user-roles": {
+                        "data": [
+                            {
+                                "attributes": {
+                                    "role_name": "member"
                                 }
                             }
                         ]
