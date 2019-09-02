@@ -16,5 +16,6 @@ urlpatterns = [
     url(r'^bmp/reset_session/([\w-]+)$', views.bmp_reset_session),
     url(r'^bmp/reset_session/([\w-]+),?([\w-]+)$', views.bmp_reset_session),
     url(r'^bmp/reset_address_coordinates/(\d+)$', views.reset_address_coordinates),
-    url(r'^bmp/db_port$', views.bmp_db_port),
+    url(r'^bmp/db_port$', views.bmp_db_port_old),
+    url(r'^bmp/db-port/([\\.\w-]+)$', views.bmp_db_port),
 ]

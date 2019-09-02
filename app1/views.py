@@ -12,10 +12,11 @@ from app1.ssh_executor import SshExecutor
 
 
 def ping(request):
-    return HttpResponse(json.dumps({"you_are": "{}/{}".format(request.META['REMOTE_ADDR'],
-                                                              request.META['HTTP_USER_AGENT']),
+    return HttpResponse(json.dumps({"message": "OK",
                                     "stand": request.session.get('stand', 'mobile'),
-                                    }), content_type="application/json")
+                                    "data": "You are: {}/{}".format(request.META['REMOTE_ADDR'],
+                                                                    request.META['HTTP_USER_AGENT'])}),
+                        content_type="application/json; charset=utf-8")
 
 
 def set_stand(request, stand):
@@ -130,9 +131,7 @@ def reset_recovery_requests(request):
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
-def bmp_db_port(request):
-    stand = request.session.get('stand', 'master')
-
+def bmp_db_port(request, stand):
     executor = SshExecutor(stand, 42344)
     try:
         result = executor.execute(
@@ -142,6 +141,11 @@ def bmp_db_port(request):
     executor.close()
 
     return HttpResponse(result)
+
+
+def bmp_db_port_old(request):
+    stand = request.session.get('stand', 'master')
+    return bmp_db_port(request, stand)
 
 
 def reset_address_coordinates(request, address_id):

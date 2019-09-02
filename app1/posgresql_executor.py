@@ -16,9 +16,8 @@ DB_PASSWORD = "bmp"
 class PostgreSqlExec(object):
 
     def __init__(self, stand, port=SSH_PORT):
-        response = urllib2.urlopen('http://172.21.19.58:82/api/bmp/db_port')
+        response = urllib2.urlopen('http://172.21.19.58:82/api/bmp/db-port/%s' % stand)
         sql_port = int(response.read())
-
         password_file = open(SSH_PRIVATE_PASS_FILE, 'r')
         ssh_password = password_file.read()
         password_file.close()
