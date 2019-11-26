@@ -1,6 +1,7 @@
 import sshtunnel
 import psycopg2
 import urllib2
+import re
 
 SSH_HOST = "dev.magdv.com"
 SSH_PORT = 42244
@@ -16,8 +17,9 @@ DB_PASSWORD = "bmp"
 class PostgreSqlExec(object):
 
     def __init__(self, stand, port=SSH_PORT):
-        response = urllib2.urlopen('http://172.21.19.58:82/api/bmp/db-port/%s' % stand)
-        sql_port = int(response.read())
+        response = re.search('message.+?(\d+)',
+                             urllib2.urlopen('http://172.21.19.58:82/api/bmp/db-port/%s' % stand).read()).group(1)
+        sql_port = int(response)
         password_file = open(SSH_PRIVATE_PASS_FILE, 'r')
         ssh_password = password_file.read()
         password_file.close()
@@ -41,11 +43,18 @@ class PostgreSqlExec(object):
 
         self.cursor = self.cnx.cursor()
 
+    def execute_fetch(self, command):
+        try:
+            self.execute(command)
+            return self.cursor.fetchall()
+        except IOError, msg:
+            print "Command skipped: ", msg
+            raise msg
+
     def execute(self, command):
         try:
             if command.strip() != '':
                 self.cursor.execute(command)
-                return self.cursor.fetchall()
         except IOError, msg:
             print "Command skipped: ", msg
             raise msg
@@ -53,7 +62,7 @@ class PostgreSqlExec(object):
     def statement(self, value):
         sql_commands = value.split(';')
         for command in sql_commands:
-            self.execute(command)
+            self.execute_fetch(command)
 
     def exec_file(self, filename):
         fd = open(filename, 'r')

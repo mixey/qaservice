@@ -49,6 +49,7 @@ def bmp_reset_session(request, token, refresh_token=None):
     stand = request.session.get('stand', 'master')
 
     executor = SshExecutor(stand, 42344)
+    sqlExecutor = PostgreSqlExec(stand, 42344)
     error = None
     try:
         executor.execute(
@@ -58,10 +59,14 @@ def bmp_reset_session(request, token, refresh_token=None):
             executor.execute(
                 "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (
                     stand, refresh_token))
+
+        sqlExecutor.execute("delete from user_token where token = '%s';" % token)
+        sqlExecutor.commit()
+
     except Exception, msg:
         error = msg
     executor.close()
-
+    sqlExecutor.close()
     response_data = {"message": "OK" if error is None else "'{}'".format(error),
                      "stand": stand,
                      "data": {"reset_token": token, "reset_refresh_token": refresh_token}
@@ -140,7 +145,9 @@ def bmp_db_port(request, stand):
         return HttpResponse(msg)
     executor.close()
 
-    return HttpResponse(result)
+    response_data = {"message": result.rstrip('\n'),
+                     "stand": stand}
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def bmp_db_port_old(request):
@@ -153,7 +160,7 @@ def reset_address_coordinates(request, address_id):
     message = None
     executor = PostgreSqlExec(stand, 42344)
     try:
-        message = executor.execute("update delivery_address set geo = null where id = %s;" % address_id)
+        message = executor.execute_fetch("update delivery_address set geo = null where id = %s;" % address_id)
         executor.commit()
     except Exception, msg:
         message = msg
@@ -171,7 +178,7 @@ def get_phone_code(request, phone):
     stand = request.session.get('stand', 'master')
     executor = PostgreSqlExec(stand, 42344)
     try:
-        cursor = executor.execute("""
+        cursor = executor.execute_fetch("""
             SELECT token
             FROM verification
             WHERE value = '+%s'
