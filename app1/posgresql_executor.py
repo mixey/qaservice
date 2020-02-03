@@ -18,7 +18,7 @@ class PostgreSqlExec(object):
 
     def __init__(self, stand, port=SSH_PORT):
         response = re.search('message.+?(\d+)',
-                             urllib2.urlopen('http://172.21.19.58:82/api/bmp/db-port/%s' % stand).read()).group(1)
+                             urllib2.urlopen('http://ci-mobile.dev.magdv.com:82/api/bmp/db-port/%s' % stand).read()).group(1)
         sql_port = int(response)
         password_file = open(SSH_PRIVATE_PASS_FILE, 'r')
         ssh_password = password_file.read()

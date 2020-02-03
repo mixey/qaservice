@@ -25,7 +25,7 @@ SECRET_KEY = 'hai9pf5xcnt8gw(-7_w_d&5lu^pcyx7#doggibgnt=-a*^6_r+'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '172.21.19.58', 'tsk-ws-m05.kdvm.ru']
+ALLOWED_HOSTS = ['127.0.0.1', 'ci-mobile.dev.magdv.com']
 
 
 # Application definition
