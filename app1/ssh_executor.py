@@ -1,7 +1,7 @@
 import paramiko
 
-SSH_HOST = "dev.magdv.com"
-SSH_PORT = 42244
+SSH_HOST = 'stand.bmp.magdv' # 10.2.3.1
+SSH_PORT = 22
 SSH_USERNAME = "m.tkachev"
 SSH_PRIVATE_KEY_FILE = "OpenSsh"
 SSH_PRIVATE_PASS_FILE = "ssh.password"
@@ -9,7 +9,7 @@ SSH_PRIVATE_PASS_FILE = "ssh.password"
  
 class SshExecutor(object):        
 
-    def __init__(self, stand, port=SSH_PORT):
+    def __init__(self, port=SSH_PORT):
         with open(SSH_PRIVATE_PASS_FILE, 'r') as infile:
             private_key_password = infile.read()
     
@@ -30,4 +30,3 @@ class SshExecutor(object):
     
     def close(self):
         self.ssh.close()
-        

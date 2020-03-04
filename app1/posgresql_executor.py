@@ -1,14 +1,8 @@
-import sshtunnel
 import psycopg2
 import urllib2
 import re
 
-SSH_HOST = "dev.magdv.com"
-SSH_PORT = 42244
-SSH_USERNAME = "m.tkachev"
-SSH_PRIVATE_KEY_FILE = "OpenSsh"
-SSH_PRIVATE_PASS_FILE = "ssh.password"
-
+DB_HOST = 'stand.bmp.magdv' # 10.2.3.1
 DB_NAME = "bmp"
 DB_USERNAME = "bmp"
 DB_PASSWORD = "bmp"
@@ -16,29 +10,15 @@ DB_PASSWORD = "bmp"
 
 class PostgreSqlExec(object):
 
-    def __init__(self, stand, port=SSH_PORT):
+    def __init__(self, stand):
         response = re.search('message.+?(\d+)',
-                             urllib2.urlopen('http://ci-mobile.dev.magdv.com:82/api/bmp/db-port/%s' % stand).read()).group(1)
-        sql_port = int(response)
-        password_file = open(SSH_PRIVATE_PASS_FILE, 'r')
-        ssh_password = password_file.read()
-        password_file.close()
-        self.server = sshtunnel.SSHTunnelForwarder(
-            (SSH_HOST, port),
-            ssh_host_key=None,
-            ssh_username=SSH_USERNAME,
-            ssh_password=None,
-            ssh_private_key=SSH_PRIVATE_KEY_FILE,
-            ssh_private_key_password=ssh_password,
-            remote_bind_address=("localhost", sql_port))
-
-        self.server.start()
-
+                             urllib2.urlopen('http://127.0.0.1:8080/api/bmp/db-port/%s' % stand).read()).group(1)
+        db_port = int(response)
         self.cnx = psycopg2.connect(
             user=DB_USERNAME,
             password=DB_PASSWORD,
-            host='127.0.0.1',
-            port=self.server.local_bind_port,
+            host=DB_HOST,
+            port=db_port,
             dbname=DB_NAME)
 
         self.cursor = self.cnx.cursor()
@@ -75,4 +55,3 @@ class PostgreSqlExec(object):
 
     def close(self):
         self.cnx.close()
-        self.server.stop()

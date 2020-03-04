@@ -27,7 +27,7 @@ def set_stand(request, stand):
 def reset_session(request, session_id):
     stand = request.session.get('stand', 'mobile')
 
-    executor = SshExecutor(stand)
+    executor = SshExecutor()
     error = None
     try:
         executor.execute(
@@ -48,8 +48,8 @@ def reset_session(request, session_id):
 def bmp_reset_session(request, token, refresh_token=None):
     stand = request.session.get('stand', 'master')
 
-    executor = SshExecutor(stand, 42344)
-    sqlExecutor = PostgreSqlExec(stand, 42344)
+    executor = SshExecutor(42344)
+    sqlExecutor = PostgreSqlExec(stand)
     error = None
     try:
         executor.execute(
@@ -137,7 +137,7 @@ def reset_recovery_requests(request):
 
 
 def bmp_db_port(request, stand):
-    executor = SshExecutor(stand, 42344)
+    executor = SshExecutor()
     try:
         result = executor.execute(
             "cd /opt/stand/marketplace/%s && dc ps | grep -Po '(\d+)->5432' | grep -Po '^\d+'" % stand)
@@ -158,7 +158,7 @@ def bmp_db_port_old(request):
 def reset_address_coordinates(request, address_id):
     stand = request.session.get('stand', 'master')
     message = None
-    executor = PostgreSqlExec(stand, 42344)
+    executor = PostgreSqlExec(stand)
     try:
         message = executor.execute_fetch("update delivery_address set geo = null where id = %s;" % address_id)
         executor.commit()
@@ -176,7 +176,7 @@ def delete_user(request):
 
 def get_phone_code(request, phone):
     stand = request.session.get('stand', 'master')
-    executor = PostgreSqlExec(stand, 42344)
+    executor = PostgreSqlExec(stand)
     try:
         cursor = executor.execute_fetch("""
             SELECT token
