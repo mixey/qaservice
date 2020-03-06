@@ -5,15 +5,17 @@ import json
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-import qa_jsonapi
+from app1 import user_generator
 from app1.posgresql_executor import PostgreSqlExec
 from app1.sql_executor import SqlExec
 from app1.ssh_executor import SshExecutor
 
+DEFAULT_STAND = "mobile"
+
 
 def ping(request):
     return HttpResponse(json.dumps({"message": "OK",
-                                    "stand": request.session.get('stand', 'mobile'),
+                                    "stand": request.session.get('stand', DEFAULT_STAND),
                                     "data": "You are: {}/{}".format(request.META['REMOTE_ADDR'],
                                                                     request.META['HTTP_USER_AGENT'])}),
                         content_type="application/json; charset=utf-8")
@@ -24,32 +26,11 @@ def set_stand(request, stand):
     return ping(request)
 
 
-def reset_session(request, session_id):
-    stand = request.session.get('stand', 'mobile')
+def bmp_reset_session(request, token, refresh_token=None):
+    stand = request.session.get('stand', DEFAULT_STAND)
 
     executor = SshExecutor()
-    error = None
-    try:
-        executor.execute(
-            "cd /opt/stand/magonline/%s \ndc exec -T sesredis redis-cli -n 2 eval \"return redis.call('del', 'sess_%s')\" 0 prefix" % (
-                stand, session_id))
-        # executor.execute("cd /opt/stand/magonline/%s \ndc exec -T sesredis bash" % (stand))
-    except Exception, msg:
-        error = msg
-    executor.close()
-
-    response_data = {"message": "OK" if error is None else "'{}'".format(error),
-                     "stand": stand,
-                     "data": {"session_id": session_id}
-                     }
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-
-def bmp_reset_session(request, token, refresh_token=None):
-    stand = request.session.get('stand', 'master')
-
-    executor = SshExecutor(42344)
-    sqlExecutor = PostgreSqlExec(stand)
+    sql_executor = PostgreSqlExec(stand)
     error = None
     try:
         executor.execute(
@@ -60,13 +41,13 @@ def bmp_reset_session(request, token, refresh_token=None):
                 "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (
                     stand, refresh_token))
 
-        sqlExecutor.execute("delete from user_token where token = '%s';" % token)
-        sqlExecutor.commit()
+        sql_executor.execute("delete from user_token where token = '%s';" % token)
+        sql_executor.commit()
 
     except Exception, msg:
         error = msg
     executor.close()
-    sqlExecutor.close()
+    sql_executor.close()
     response_data = {"message": "OK" if error is None else "'{}'".format(error),
                      "stand": stand,
                      "data": {"reset_token": token, "reset_refresh_token": refresh_token}
@@ -77,25 +58,33 @@ def bmp_reset_session(request, token, refresh_token=None):
 @csrf_exempt
 def create_user(request, user_type):
     error = None
-    stand = request.session.get('stand', 'mobile')
-    response_data = {}
+    stand = request.session.get('stand', DEFAULT_STAND)
+    response_data = {"stand": stand}
     try:
-        if user_type == "private_phone_login" or user_type == "private_email_login":
-            api = qa_jsonapi.QaJsonApi(stand)
+        db_exec = PostgreSqlExec(stand)
+        query = None
+        user_data = None
+        if user_type == "private_phone_login":
+            user_data = user_generator.private_user_with_phone()
+            query = db_exec.render_template("assets/private_user_with_phone.sql.template", user_data)
+        elif user_type == "private_email_login":
+            user_data = user_generator.private_user_with_email()
+            query = db_exec.render_template("assets/private_user_with_email.sql.template", user_data)
+        elif user_type == "private_phone_email_login":
+            user_data = user_generator.private_user_with_phone_email()
+            query = db_exec.render_template("assets/private_user_with_phone_email.sql.template", user_data)
 
-            if request.body:
-                body_unicode = request.body.decode('utf-8')
-                body = json.loads(body_unicode)
-                api.set_user(body)
-            phone_as_login = True if user_type == "private_phone_login" else False
-            response_data["data"] = api.create_private_user(phone_as_login)
-        else:
-            raise Exception("Type value '{}' should be (private)".format(user_type))
+        db_exec.execute_batch(query)
+        db_exec.commit()
+        response_data["data"] = user_data
+
+        if not query and not user_data:
+            raise Exception("Use following endpoints: private_phone_login, private_email_login, private_phone_email_login" )
     except Exception, ex:
+        print ex.message
         error = ex.message
+        response_data["error"] = ex.message
 
-    response_data["message"] = "OK" if error is None else error
-    response_data["stand"] = stand
     response = HttpResponse(json.dumps(response_data), content_type="application/json")
     if error:
         response.status_code = 400
@@ -103,34 +92,18 @@ def create_user(request, user_type):
 
 
 def create_all(request):
-    stand = request.session.get('stand', 'mobile')
+    stand = request.session.get('stand', DEFAULT_STAND)
     error = None
     executor = SqlExec(stand)
     try:
-        executor.exec_file('assets/private_customer.sql')
+        executor.exec_file('assets/private_user_with_phone.sql.template')
         executor.exec_file('assets/business_customer.sql')
         executor.commit()
     except Exception, msg:
         error = msg
     executor.close()
 
-    response_data = {"message": "OK" if error is None else "'{}'".format(error),
-                     "stand": stand
-                     }
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-
-def reset_recovery_requests(request):
-    stand = request.session.get('stand', 'mobile')
-    error = None
-    executor = SqlExec(stand)
-    try:
-        executor.execute("delete from customer_flowpassword")
-        executor.commit()
-    except Exception, msg:
-        error = msg
-    executor.close()
-    response_data = {"message": "OK" if error is None else "'{}'".format(error),
+    response_data = {"data": "OK" if error is None else "'{}'".format(error),
                      "stand": stand
                      }
     return HttpResponse(json.dumps(response_data), content_type="application/json")
@@ -145,28 +118,28 @@ def bmp_db_port(request, stand):
         return HttpResponse(msg)
     executor.close()
 
-    response_data = {"message": result.rstrip('\n'),
+    response_data = {"data": result.rstrip('\n'),
                      "stand": stand}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def bmp_db_port_old(request):
-    stand = request.session.get('stand', 'master')
+    stand = request.session.get('stand', DEFAULT_STAND)
     return bmp_db_port(request, stand)
 
 
 def reset_address_coordinates(request, address_id):
-    stand = request.session.get('stand', 'master')
-    message = None
+    stand = request.session.get('stand', DEFAULT_STAND)
+    response_data = {"stand": stand}
     executor = PostgreSqlExec(stand)
     try:
         message = executor.execute_fetch("update delivery_address set geo = null where id = %s;" % address_id)
         executor.commit()
-    except Exception, msg:
-        message = msg
+        response_data["data"] = message
+    except Exception, error:
+        error_result = error.message
+        response_data["error"] = error_result
     executor.close()
-    response_data = {"message": message,
-                     "stand": stand}
     return HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
@@ -175,21 +148,33 @@ def delete_user(request):
 
 
 def get_phone_code(request, phone):
-    stand = request.session.get('stand', 'master')
+    stand = request.session.get('stand', DEFAULT_STAND)
     executor = PostgreSqlExec(stand)
+    error_result = None
+    result = None
+    response_data = {"stand": stand}
     try:
         cursor = executor.execute_fetch("""
             SELECT token
             FROM verification
-            WHERE value = '+%s'
+            WHERE value = '+{}'
+            LIMIT 1""".format(phone))
+        value_result = cursor[0][0] if cursor else None
+        if not value_result:
+            raise Exception("Phone ({}) is missing".format(phone))
+
+        cursor = executor.execute_fetch("""
+            SELECT token
+            FROM verification
+            WHERE value = '+{}'
                   AND scenario = 'confirm'
                   AND is_verified = FALSE
-            LIMIT 1""" % phone)
-        code = cursor[0][0] if cursor else None
-    except Exception, msg:
-        code = msg
+            LIMIT 1""".format(phone))
+        result = cursor[0][0] if cursor else None
+        response_data["data"] = result
+    except Exception, error:
+        error_result = error.message
+        response_data["error"] = error_result
     executor.close()
-    response_data = {"data": code,
-                     "stand": stand}
+
     return HttpResponse(json.dumps(response_data), content_type="application/json")
-    return None

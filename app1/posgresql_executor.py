@@ -2,7 +2,7 @@ import psycopg2
 import urllib2
 import re
 
-DB_HOST = 'stand.bmp.magdv' # 10.2.3.1
+DB_HOST = '10.2.3.1'  # stand.bmp.magdv
 DB_NAME = "bmp"
 DB_USERNAME = "bmp"
 DB_PASSWORD = "bmp"
@@ -11,8 +11,8 @@ DB_PASSWORD = "bmp"
 class PostgreSqlExec(object):
 
     def __init__(self, stand):
-        response = re.search('message.+?(\d+)',
-                             urllib2.urlopen('http://127.0.0.1:8080/api/bmp/db-port/%s' % stand).read()).group(1)
+        response = re.search('data.+?(\d+)',
+                             urllib2.urlopen('http://127.0.0.1:8080/api/db-port/%s' % stand).read()).group(1)
         db_port = int(response)
         self.cnx = psycopg2.connect(
             user=DB_USERNAME,
@@ -39,6 +39,11 @@ class PostgreSqlExec(object):
             print "Command skipped: ", msg
             raise msg
 
+    def execute_batch(self, value):
+        sql_commands = value.split(';')
+        for command in sql_commands:
+            self.execute(command)
+
     def statement(self, value):
         sql_commands = value.split(';')
         for command in sql_commands:
@@ -49,6 +54,14 @@ class PostgreSqlExec(object):
         sql_file = fd.read()
         fd.close()
         self.statement(sql_file)
+
+    def render_template(self, filename, args):
+        fd = open(filename, 'r')
+        template = fd.read()
+        fd.close()
+        for key in args.keys():
+            template = template.replace("{{ " + key + " }}", args.get(key))
+        return template
 
     def commit(self):
         self.cnx.commit()
