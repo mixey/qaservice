@@ -25,7 +25,7 @@ SECRET_KEY = 'hai9pf5xcnt8gw(-7_w_d&5lu^pcyx7#doggibgnt=-a*^6_r+'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'ci-mobile.dev.magdv.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'ci-mobile.dev.magdv.com', '172.18.49.122']
 
 
 # Application definition
@@ -118,6 +118,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 
 LOGGING = {
     'version': 1,

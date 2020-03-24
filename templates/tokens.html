@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block scripts %}
+    <script src="{% static 'js/page-tokens.js' %}"></script>
+{% endblock %}
+
+{% block context %}
+    {% if result %}
+        <div class="message-pane">
+            {{ result }}
+            <input id="id_result" type="hidden" value="{{ result }}">
+        </div>
+    {% elif error %}
+        <div class="message-pane">
+            {{ error }}
+            <input name="id_error" type="hidden" value="{{ error }}">
+        </div>
+    {% endif %}
+
+    <form method="POST" action="/api/tokens">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+            <div class="csn-user-field-wrapper">
+                {{ field.errors }}
+                {{ field.label_tag }} {{ field }}
+                {% if field.help_text %}
+                    <p class="help">{{ field.help_text|safe }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <input id="id_reset_token" class="button green right margin_top_1x" type="submit"
+               value="Сбросить токен"/>
+
+        <input id="id_clear" class="button green right margin_top_1x" type="submit"
+               value="Повторить"/>
+    </form>
+{% endblock %}

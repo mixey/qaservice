@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block context %}
+    {% if result %}
+        <div class="message-pane">
+            Юзер создан
+        </div>
+        {% for key, value in result.items %}
+            <div class="csn-user-field-wrapper">
+                <input type="text" readonly value="{{ value }}">
+            </div>
+        {% endfor %}
+    {% else %}
+        <form method="POST" action="/api/users">
+            {% csrf_token %}
+            {% for field in form.visible_fields %}
+                <div class="csn-user-field-wrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <input id="id_reset_token" class="button green right margin_top_1x" type="submit"
+                   value="Generate"/>
+        </form>
+    {% endif %}
+{% endblock %}

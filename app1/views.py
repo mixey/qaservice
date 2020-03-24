@@ -3,9 +3,11 @@
 import json
 
 from django.http import HttpResponse
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
-from app1 import user_generator
+from app1 import user_generator, helper
+from app1.forms import ResetTokenForm, UserKindForm
 from app1.posgresql_executor import PostgreSqlExec
 from app1.sql_executor import SqlExec
 from app1.ssh_executor import SshExecutor
@@ -21,33 +23,66 @@ def ping(request):
                         content_type="application/json; charset=utf-8")
 
 
+def index(request):
+    return redirect(request.POST.get("http_referer", "/api/tokens"))
+
+
+def tokens_page(request):
+    stand = request.session.get('stand', DEFAULT_STAND)
+    result = None
+    error = None
+    if request.method == 'POST':
+        form = ResetTokenForm(request.POST)
+        if form.is_valid():
+            if form.cleaned_data['reset_mode'] == form.RESET_MODES[0][0]:  # remove tokens
+                result, error = helper.remove_token(
+                    stand,
+                    [form.cleaned_data['token'], form.cleaned_data['refresh_token']]
+                )
+            else:  # logout tokens
+                result, error = helper.logout_token(
+                    stand,
+                    [form.cleaned_data['token'], form.cleaned_data['refresh_token']]
+                )
+    else:
+        form = ResetTokenForm()
+    return render(request, "tokens.html", {'form': form,
+                                           'stand': stand,
+                                           'result': result,
+                                           'error': error})
+
+
+def users_page(request):
+    stand = request.session.get('stand', DEFAULT_STAND)
+    result = None
+    error = None
+    if request.method == 'POST':
+        form = UserKindForm(request.POST)
+        if form.is_valid():
+            user_data = user_generator.private_user_with_phone_email()
+            db_exec = PostgreSqlExec(stand)
+            query = db_exec.render_template("assets/private_user_with_phone_email.sql.template", user_data)
+            db_exec.execute_batch(query)
+            db_exec.commit()
+            result = user_data
+    else:
+        form = UserKindForm()
+    return render(request, "users.html", {'form': form,
+                                          'stand': stand,
+                                          'result': result,
+                                          'error': error})
+
+
 def set_stand(request, stand):
     request.session["stand"] = stand
-    return ping(request)
+    return index(request)
 
 
 def bmp_reset_session(request, token, refresh_token=None):
     stand = request.session.get('stand', DEFAULT_STAND)
 
-    executor = SshExecutor()
-    sql_executor = PostgreSqlExec(stand)
-    error = None
-    try:
-        executor.execute(
-            "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (
-                stand, token))
-        if refresh_token:
-            executor.execute(
-                "cd /opt/stand/marketplace/%s \ndc exec -T redis redis-cli -n 0 eval \"return redis.call('del', 'Token:%s')\" 0 prefix" % (
-                    stand, refresh_token))
+    result, error = helper.remove_token(stand, [token, refresh_token])
 
-        sql_executor.execute("delete from user_token where token = '%s';" % token)
-        sql_executor.commit()
-
-    except Exception, msg:
-        error = msg
-    executor.close()
-    sql_executor.close()
     response_data = {"message": "OK" if error is None else "'{}'".format(error),
                      "stand": stand,
                      "data": {"reset_token": token, "reset_refresh_token": refresh_token}
@@ -79,7 +114,8 @@ def create_user(request, user_type):
         response_data["data"] = user_data
 
         if not query and not user_data:
-            raise Exception("Use following endpoints: private_phone_login, private_email_login, private_phone_email_login" )
+            raise Exception(
+                "Use following endpoints: private_phone_login, private_email_login, private_phone_email_login")
     except Exception, ex:
         print ex.message
         error = ex.message
