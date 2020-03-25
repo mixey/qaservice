@@ -22,8 +22,8 @@
         {% csrf_token %}
         {% for field in form.visible_fields %}
             <div class="csn-user-field-wrapper">
-                {{ field.errors }}
                 {{ field.label_tag }} {{ field }}
+                {{ field.errors }}
                 {% if field.help_text %}
                     <p class="help">{{ field.help_text|safe }}</p>
                 {% endif %}

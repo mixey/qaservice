@@ -56,17 +56,29 @@ def users_page(request):
     stand = request.session.get('stand', DEFAULT_STAND)
     result = None
     error = None
-    if request.method == 'POST':
-        form = UserKindForm(request.POST)
-        if form.is_valid():
-            user_data = user_generator.private_user_with_phone_email()
-            db_exec = PostgreSqlExec(stand)
-            query = db_exec.render_template("assets/private_user_with_phone_email.sql.template", user_data)
-            db_exec.execute_batch(query)
-            db_exec.commit()
-            result = user_data
-    else:
-        form = UserKindForm()
+    db_exec = None
+    try:
+        if request.method == 'POST':
+            form = UserKindForm(request.POST)
+            if form.is_valid():
+                user_data, template = user_generator.get_user_and_template(
+                    form.cleaned_data.get("type", None),
+                    form.cleaned_data.get("login_mode", None),
+                    form.cleaned_data.get("address_count", None),
+                    form.cleaned_data.get("address_not_confirmed_count", None)
+                )
+                db_exec = PostgreSqlExec(stand)
+                query = db_exec.render_template('templates/sql/{}'.format(template), user_data)
+                db_exec.execute_batch(query)
+                db_exec.commit()
+                result = user_data
+        else:
+            form = UserKindForm()
+    except Exception, ex:
+        error = ex.message
+
+    if db_exec:
+        db_exec.close()
     return render(request, "users.html", {'form': form,
                                           'stand': stand,
                                           'result': result,
@@ -101,13 +113,13 @@ def create_user(request, user_type):
         user_data = None
         if user_type == "private_phone_login":
             user_data = user_generator.private_user_with_phone()
-            query = db_exec.render_template("assets/private_user_with_phone.sql.template", user_data)
+            query = db_exec.render_template("templates/sql/private_user_with_phone.sql", user_data)
         elif user_type == "private_email_login":
             user_data = user_generator.private_user_with_email()
-            query = db_exec.render_template("assets/private_user_with_email.sql.template", user_data)
+            query = db_exec.render_template("templates/sql/private_user_with_email.sql", user_data)
         elif user_type == "private_phone_email_login":
             user_data = user_generator.private_user_with_phone_email()
-            query = db_exec.render_template("assets/private_user_with_phone_email.sql.template", user_data)
+            query = db_exec.render_template("templates/sql/private_user_with_phone_email.sql", user_data)
 
         db_exec.execute_batch(query)
         db_exec.commit()
@@ -132,8 +144,7 @@ def create_all(request):
     error = None
     executor = SqlExec(stand)
     try:
-        executor.exec_file('assets/private_user_with_phone.sql.template')
-        executor.exec_file('assets/business_customer.sql')
+        executor.exec_file('templates/sql/private_user_with_phone.sql')
         executor.commit()
     except Exception, msg:
         error = msg

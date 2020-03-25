@@ -12,78 +12,73 @@ class Address(object):
         self.geo_lon = geo_lon
 
 
-address_list = [
-    Address(
-        "634061, Томск, Томская область, Сибирская улица, 27",
-        "56.481936",
-        "84.972976"
-    ),
-    Address(
-        "634034, Томск, Томская область, улица Нахимова, 20/1",
-        "56.455235",
-        "84.966317"),
-    Address(
-        "634031, Томск, Томская область, улица Нарановича, 1",
-        "56.492649",
-        "85.052072"),
-    Address(
-        "634028, Томск, Томская область, проспект Ленина, 12/1",
-        "56.460366",
-        "84.950977"),
-    Address(
-        "634055, Томск, Томская область, Академический проспект, 5",
-        "56.473457",
-        "85.046689"),
-    Address(
-        "634041, Томск, Томская область, улица Дзержинского, 12/42",
-        "56.472387",
-        "84.968979"),
-    Address(
-        "634061, Томск, Томская область, Киевская улица, 26",
-        "56.480519",
-        "84.976165"),
+inn_list = [
+    '928136486703',
+    '182783694585',
+    '215159451103',
+    '871802510759',
+    '652787262809',
+    '728105086971',
+    '158244216123',
+    '255183906808',
+    '885114954475',
+    '723080221899',
+    '336811432803',
+    '721495683960',
+    '233506118864',
+    '218104386475',
+    '324805516406',
+    '552862820636',
+    '239705257574',
+    '481033033990',
+    '502221815111',
+    '302302050585',
+    '192647702064',
+    '379217691698',
+    '824008101002',
+    '752053132943',
+    '334792951684',
+    '440236994906',
+    '389246336013',
+    '629805561237',
+    '297599638241',
+    '158331239977',
 ]
 
 
-def private_user_with_phone():
+def private_user_with_phone(address_count):
     payloads = ''.join(choice(CYRILIC_LOWERCASE) for _ in range(12))
     phone_payloads = ''.join(choice(digits) for _ in range(7))
     phone = "+7913{}".format(phone_payloads)
     firstname = "Ибрагим-{}".format(payloads.encode('utf-8'))
     lastname = "ЯТебяНайдуЭ-{}".format(payloads.encode('utf-8'))
     password = "qwer1234"
-    address_item = choice(address_list)
     return {
         "phone": phone,
         "firstname": firstname,
         "lastname": lastname,
         "password": password,
-        "address_name": address_item.name,
-        "address_geo_lat": address_item.geo_lat,
-        "address_geo_lon": address_item.geo_lon
+        "address_count": address_count,
     }
 
 
-def private_user_with_email():
+def private_user_with_email(address_count):
     payloads = ''.join(choice(CYRILIC_LOWERCASE) for _ in range(12))
     phone_payloads = ''.join(choice(digits) for _ in range(7))
     firstname = "Ибрагим-{}".format(payloads.encode('utf-8'))
     lastname = "ЯТебяНайдуЭ-{}".format(payloads.encode('utf-8'))
     password = "qwer1234"
     email = "test-{}@remove.com".format(phone_payloads)
-    address_item = choice(address_list)
     return {
-         "email": email,
+        "email": email,
         "firstname": firstname,
         "lastname": lastname,
         "password": password,
-        "address_name": address_item.name,
-        "address_geo_lat": address_item.geo_lat,
-        "address_geo_lon": address_item.geo_lon
+        "address_count": address_count,
     }
 
 
-def private_user_with_phone_email():
+def private_user_with_phone_email(address_count):
     payloads = ''.join(choice(CYRILIC_LOWERCASE) for _ in range(12))
     phone_payloads = ''.join(choice(digits) for _ in range(7))
     phone = "+7913{}".format(phone_payloads)
@@ -91,14 +86,48 @@ def private_user_with_phone_email():
     lastname = "ЯТебяНайдуЭ-{}".format(payloads.encode('utf-8'))
     password = "qwer1234"
     email = "test-{}@remove.com".format(phone_payloads)
-    address_item = choice(address_list)
     return {
         "phone": phone,
         "email": email,
         "firstname": firstname,
         "lastname": lastname,
         "password": password,
-        "address_name": address_item.name,
-        "address_geo_lat": address_item.geo_lat,
-        "address_geo_lon": address_item.geo_lon
+        "address_count": address_count,
     }
+
+
+def individual_user(address_count, address_not_confirmed_count):
+    payloads = ''.join(choice(CYRILIC_LOWERCASE) for _ in range(12))
+    phone_payloads = ''.join(choice(digits) for _ in range(7))
+    phone = "+7913{}".format(phone_payloads)
+    firstname = "Карабас-{}".format(payloads.encode('utf-8'))
+    lastname = "Барабасов-{}".format(payloads.encode('utf-8'))
+    contractor_name = "ИП {} {}".format(lastname, firstname)
+    password = "qwer1234"
+    email = "test-individual-{}@remove.com".format(phone_payloads)
+    return {
+        "firstname": firstname,
+        "lastname": lastname,
+        "contractor_name": contractor_name,
+        "phone": phone,
+        "email": email,
+        "is_email_verified": "true",
+        "address_count": address_count,
+        "address_not_confirmed_count": address_not_confirmed_count,
+        "inn": choice(inn_list),
+        "password": password,
+    }
+
+
+def get_user_and_template(user_type, login_mode, address_count, address_not_confirmed_count):
+    user = None
+    if user_type == 'individual':
+        user = individual_user(address_count, address_not_confirmed_count)
+    elif user_type == 'private':
+        if login_mode == 'with_phone':
+            user = private_user_with_phone(address_count)
+        elif login_mode == 'with_email':
+            user = private_user_with_email(address_count)
+        elif login_mode == 'with_phone_email':
+            user = private_user_with_phone_email(address_count)
+    return user, "{}_user_{}.sql".format(user_type, login_mode)

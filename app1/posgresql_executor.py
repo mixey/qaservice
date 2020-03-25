@@ -60,7 +60,7 @@ class PostgreSqlExec(object):
         template = fd.read()
         fd.close()
         for key in args.keys():
-            template = template.replace("{{ " + key + " }}", args.get(key))
+            template = template.replace("{{ " + key + " }}", str(args.get(key)))
         return template
 
     def commit(self):

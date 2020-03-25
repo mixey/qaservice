@@ -532,7 +532,7 @@ a:hover {
 
 .errorlist {
     color: red;
-    width: 200px;
+    width: 100%;
 }
 
 .progress-bar {
@@ -748,4 +748,24 @@ a:hover {
 
 .inline {
     display: inline;
+}
+
+.field-item {
+    padding: 0 10px;
+    height: 40px;
+    color: #bbb;
+    text-shadow: 1px 1px 1px black;
+    background: rgba(0, 0, 0, 0.16);
+    border: 0;
+    border-radius: 5px;
+    -webkit-box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.field-label {
+    font-weight: bold;
+}
+
+.field-value {
+    width: 100%;
 }

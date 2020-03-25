@@ -2,9 +2,7 @@ SET session vars.phone = '{{ phone }}';
 SET session vars.email = '{{ email }}';
 SET session vars.first_name = '{{ firstname }}';
 SET session vars.last_name = '{{ lastname }}';
-SET session vars.address_title = '{{ address_name }}';
-SET session vars.address_geo_lat = {{ address_geo_lat }};
-SET session vars.address_geo_lon = {{ address_geo_lon }};
+SET session vars.address_count = {{ address_count }};
 
 INSERT INTO public.user_profile (first_name, last_name, second_name, email, is_email_verified, phone, is_phone_verified, is_active, settings, creator_id, updater_id, date_created, date_updated, contractor_id)
 VALUES (current_setting('vars.first_name'), current_setting('vars.last_name'), null, current_setting('vars.email'), true, current_setting('vars.phone'), true, true, '{"location_id": 508635, "subscriptions": {"offers": true}}', null, null, '2019-07-16 08:32:25.000000', '2019-07-16 08:34:26.000000', null);
@@ -29,5 +27,7 @@ INSERT INTO public.user_role (user_id, role_name, active_from, active_to, creato
 VALUES (currval('user_profile_id_seq'), 'member', '2019-07-16 08:32:25.070120', null, currval('user_profile_id_seq'), null, '2019-07-16 08:32:25.000000', null);
 
 INSERT INTO public.delivery_address (status, contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, is_default, is_accurate, meta, date_created, date_updated, creator_id, updater_id, _disable_update_trigger, is_geo_need_update)
-VALUES (2, currval('contractor_id_seq'), null, ST_SetSRID(ST_MakePoint(current_setting('vars.address_geo_lon')::double precision,current_setting('vars.address_geo_lat')::double precision), 4326)::geography, current_setting('vars.address_title'), null, null, null,
-        current_setting('vars.first_name'), current_setting('vars.phone'), current_setting('vars.last_name'), null, true, true, null, '2019-07-16 08:34:26.000000', null, currval('user_profile_id_seq'), null, false, false);
+SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, false, is_accurate, meta, date_created, date_updated, currval('user_profile_id_seq'), null, _disable_update_trigger, is_geo_need_update
+ FROM delivery_address
+ WHERE address like '%Томск%' AND is_accurate = true AND status = 2 AND title IS null
+ limit current_setting('vars.address_count')::int OFFSET (select floor(random() * 20 + 1));

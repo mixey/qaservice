@@ -6,25 +6,32 @@
         <div class="message-pane">
             Юзер создан
         </div>
-        {% for key, value in result.items %}
-            <div class="csn-user-field-wrapper">
-                <input type="text" readonly value="{{ value }}">
-            </div>
-        {% endfor %}
+        <div class="csn-table">
+            {% for key, value in result.items %}
+                <div class="csn-table-row">
+                    <div class="csn-table-cell field-item field-label">{{ key }}:</div>
+                    <div class="csn-table-cell field-item field-value">{{ value }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif error %}
+        <div class="message-pane">
+            {{ error }}
+        </div>
     {% else %}
         <form method="POST" action="/api/users">
             {% csrf_token %}
             {% for field in form.visible_fields %}
                 <div class="csn-user-field-wrapper">
-                    {{ field.errors }}
                     {{ field.label_tag }} {{ field }}
+                    {{ field.errors }}
                     {% if field.help_text %}
                         <p class="help">{{ field.help_text|safe }}</p>
                     {% endif %}
                 </div>
             {% endfor %}
 
-            <input id="id_reset_token" class="button green right margin_top_1x" type="submit"
+            <input id="id_generate" class="button green right margin_top_1x" type="submit"
                    value="Generate"/>
         </form>
     {% endif %}
