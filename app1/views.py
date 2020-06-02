@@ -180,7 +180,7 @@ def reset_address_coordinates(request, address_id):
     response_data = {"stand": stand}
     executor = PostgreSqlExec(stand)
     try:
-        message = executor.execute_fetch("update delivery_address set geo = null where id = %s;" % address_id)
+        message = executor.execute("update delivery_address set geo = null where id = %s;" % address_id)
         executor.commit()
         response_data["data"] = message
     except Exception, error:
