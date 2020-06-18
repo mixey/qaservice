@@ -112,13 +112,13 @@ def create_user(request, user_type):
         query = None
         user_data = None
         if user_type == "private_phone_login":
-            user_data = user_generator.private_user_with_phone()
+            user_data = user_generator.private_user_with_phone(1)
             query = db_exec.render_template("templates/sql/private_user_with_phone.sql", user_data)
         elif user_type == "private_email_login":
-            user_data = user_generator.private_user_with_email()
+            user_data = user_generator.private_user_with_email(1)
             query = db_exec.render_template("templates/sql/private_user_with_email.sql", user_data)
         elif user_type == "private_phone_email_login":
-            user_data = user_generator.private_user_with_phone_email()
+            user_data = user_generator.private_user_with_phone_email(1)
             query = db_exec.render_template("templates/sql/private_user_with_phone_email.sql", user_data)
 
         db_exec.execute_batch(query)
