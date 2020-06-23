@@ -213,9 +213,8 @@ def get_phone_code(request, phone):
         cursor = executor.execute_fetch("""
             SELECT token
             FROM verification
-            WHERE value = '+{}'
-                  AND scenario = 'confirm'
-                  AND is_verified = FALSE
+            WHERE value = '+{}'                  
+                  AND is_verified = False
             LIMIT 1""".format(phone))
         result = cursor[0][0] if cursor else None
         response_data["data"] = result
