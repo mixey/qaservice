@@ -44,3 +44,6 @@ SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, addres
 
 INSERT INTO public.requisite (inn, kpp, legal_address, contractor_id, creator_id, updater_id, date_created, date_updated)
 VALUES (current_setting('vars.inn'), null, current_setting('vars.contractor_name'), currval('contractor_id_seq'), null, null, '2019-03-11 11:45:51.041275', '2020-01-21 06:50:30.000000');
+
+INSERT INTO public.user_role (user_id, role_name, active_from, active_to, creator_id, updater_id, date_created, date_updated)
+VALUES (currval('user_profile_id_seq'), 'contractor_admin', '2020-07-29 08:43:15.642310', null, null, null, '2020-07-29 08:43:15.642310', null);
