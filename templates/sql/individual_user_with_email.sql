@@ -27,7 +27,6 @@ VALUES (current_setting('vars.email'), '$2y$12$HfzAIwKcGlg7EW3C.OooN.yheaM3HW2bP
 INSERT INTO public.user_role (user_id, role_name, active_from, active_to, creator_id, updater_id, date_created, date_updated)
 VALUES (currval('user_profile_id_seq'), 'member', '2019-07-16 08:32:25.070120', null, currval('user_profile_id_seq'), null, '2019-07-16 08:32:25.000000', null);
 
--- insert CONFIRMED addresses
 INSERT INTO public.delivery_address (status, contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, is_default, is_accurate, meta, date_created, date_updated, creator_id, updater_id, _disable_update_trigger, is_geo_need_update, owner_id)
 SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, false, is_accurate, meta, date_created, date_updated, currval('user_profile_id_seq'), null, _disable_update_trigger, is_geo_need_update, currval('user_profile_id_seq')
  FROM delivery_address
@@ -37,7 +36,6 @@ SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, addres
 INSERT INTO public.agreement_delivery_address (delivery_address_id, agreement_id)
 SELECT id, 94 FROM delivery_address WHERE contractor_id = currval('contractor_id_seq');
 
--- insert NON CONFIRMED addresses
 INSERT INTO public.delivery_address (status, contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, is_default, is_accurate, meta, date_created, date_updated, creator_id, updater_id, _disable_update_trigger, is_geo_need_update, owner_id)
 SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, false, is_accurate, meta, date_created, date_updated, currval('user_profile_id_seq'), null, _disable_update_trigger, is_geo_need_update, currval('user_profile_id_seq')
  FROM delivery_address
@@ -49,8 +47,3 @@ VALUES (current_setting('vars.inn'), null, current_setting('vars.contractor_name
 
 INSERT INTO public.user_role (user_id, role_name, active_from, active_to, creator_id, updater_id, date_created, date_updated)
 VALUES (currval('user_profile_id_seq'), 'contractor_admin', '2020-07-29 08:43:15.642310', null, null, null, '2020-07-29 08:43:15.642310', null);
-
--- (shop_id = 1) KDV
--- (shop_id = 2) YARCHE
--- INSERT INTO public.user_current_address_shop (user_id, delivery_address_id, shop_id)
--- VALUES (currval('user_profile_id_seq'), (SELECT id FROM delivery_address WHERE contractor_id = currval('contractor_id_seq') LIMIT 1), 1);
