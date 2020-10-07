@@ -33,14 +33,14 @@ SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, addres
  WHERE address like '%Томск%' AND is_accurate = true AND status = 2 AND title IS NOT null
  limit current_setting('vars.address_count')::int OFFSET (select floor(random() * 20 + 1));
 
-INSERT INTO public.agreement_delivery_address (delivery_address_id, agreement_id)
-SELECT id, 94 FROM delivery_address WHERE contractor_id = currval('contractor_id_seq');
-
 INSERT INTO public.delivery_address (status, contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, is_default, is_accurate, meta, date_created, date_updated, creator_id, updater_id, _disable_update_trigger, is_geo_need_update, owner_id)
 SELECT status, currval('contractor_id_seq') as contractor_id, title, geo, address, porch, floor, flat, contact_firstname, contact_phone, contact_lastname, comment, false, is_accurate, meta, date_created, date_updated, currval('user_profile_id_seq'), null, _disable_update_trigger, is_geo_need_update, currval('user_profile_id_seq')
  FROM delivery_address
  WHERE address like '%Томск%' AND is_accurate = true AND status = 1 AND title IS NOT null
  limit current_setting('vars.address_not_confirmed_count')::int OFFSET (select floor(random() * 20 + 1));
+
+INSERT INTO public.agreement_delivery_address (delivery_address_id, agreement_id)
+SELECT id, 94 FROM delivery_address WHERE contractor_id = currval('contractor_id_seq');
 
 INSERT INTO public.requisite (inn, kpp, legal_address, contractor_id, creator_id, updater_id, date_created, date_updated)
 VALUES (current_setting('vars.inn'), null, current_setting('vars.contractor_name'), currval('contractor_id_seq'), null, null, '2019-03-11 11:45:51.041275', '2020-01-21 06:50:30.000000');
