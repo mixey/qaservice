@@ -160,7 +160,7 @@ def bmp_db_port(request, stand):
     executor = SshExecutor()
     try:
         result = executor.execute(
-            "cd /opt/stand/marketplace/%s && dc ps | grep -Po '(\d+)->5432' | grep -Po '^\d+'" % stand)
+            "cd /opt/stand/marketplace/%s && docker-compose ps | grep -Po '(\d+)->5432/tcp,' | grep -Po '^\d+'" % stand)
     except Exception, msg:
         return HttpResponse(msg)
     executor.close()

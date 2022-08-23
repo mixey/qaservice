@@ -1,6 +1,6 @@
 import paramiko
 
-SSH_HOST = '10.2.3.1' # stand.bmp.magdv
+SSH_HOST = 'stand.bmp.magdv' # stand.bmp.magdv
 SSH_PORT = 22
 SSH_USERNAME = "m.tkachev"
 SSH_PRIVATE_KEY_FILE = "OpenSsh"
